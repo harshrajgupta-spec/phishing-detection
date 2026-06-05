@@ -4,7 +4,12 @@ WORKDIR /app
 
 # Install system dependencies required by xgboost and scikit-learn
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential gcc gfortran libatlas-base-dev liblapack-dev \
+    && apt-get install -y --no-install-recommends \
+       build-essential \
+       gcc \
+       gfortran \
+       libopenblas-dev \
+       liblapack-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
