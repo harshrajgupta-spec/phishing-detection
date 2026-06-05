@@ -53,21 +53,21 @@ def index():
             return render_template("index.html", xgb_predict=xgb_predict, active_tab=active_tab)
 
         # -------- MODEL 3 (RANDOM FOREST) --------
-   """
-     if url3 and url3.strip():
-            cleaned_url3 = re.sub(r'^https?://(www\.)?', '', url3)
-            pred = rf_model.predict(vector.transform([cleaned_url3]))[0]
-
-            if pred == 1:
-                rf_predict = "SECURE!!"
-            elif pred == 0:
-                rf_predict = "UNSECURE!!"
-            else:
-                rf_predict = "something went wrong!!"
-
-            active_tab = "model3"
-            return render_template("index.html", rf_predict=rf_predict, active_tab=active_tab)
-            """
+  
+  #   if url3 and url3.strip():
+   #         cleaned_url3 = re.sub(r'^https?://(www\.)?', '', url3)
+    #        pred = rf_model.predict(vector.transform([cleaned_url3]))[0]
+#
+ #           if pred == 1:
+  #              rf_predict = "SECURE!!"
+   #         elif pred == 0:
+      #          rf_predict = "UNSECURE!!"
+       #     else:
+        #        rf_predict = "something went wrong!!"
+#
+ #           active_tab = "model3"
+  #          return render_template("index.html", rf_predict=rf_predict, active_tab=active_tab)
+            
 
     # GET request
     return render_template("index.html", active_tab=active_tab)
