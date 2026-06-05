@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>PhishSentinel</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade { animation: fadeIn 0.8s ease-out forwards; }
+
+      @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+        100% { transform: translateY(0); }
+      }
+      .animate-float { animation: float 3s ease-in-out infinite; }
+
+      .ripple:active { transform: scale(0.97); }
+
+      /* Animated Tab Content */
+      .tab-content {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+        transition: opacity 0.45s ease, transform 0.45s ease;
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      /* model-scroll: hide native scrollbar and add soft left/right fade indicators */
+      .model-scroll {
+        position: relative;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+      }
+      /* hide WebKit scrollbar */
+      .model-scroll::-webkit-scrollbar { height: 0; background: transparent; }
+
+      /* subtle thumb for browsers that still show it (optional) */
+      .model-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.06);
+        border-radius: 999px;
+      }
+
+      /* left / right fade overlays to visually mask scrollbar and indicate overflow */
+      .model-scroll::before,
+      .model-scroll::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 64px;
+        pointer-events: none;
+        transition: opacity 240ms ease;
+      }
+      /* left fade (appears only when scrolled right) */
+      .model-scroll::before {
+        left: 0;
+        background: linear-gradient(90deg, rgba(10,14,20,0.9), rgba(10,14,20,0));
+        opacity: 0; /* hidden by default */
+      }
+      /* right fade (indicates more content to the right) */
+      .model-scroll::after {
+        right: 0;
+        background: linear-gradient(270deg, rgba(10,14,20,0.9), rgba(10,14,20,0));
+        opacity: 1; /* shown by default when at left-most */
+      }
+
+      /* JS will toggle these helper classes based on scroll position */
+      .model-scroll.show-left::before { opacity: 1; }
+      .model-scroll.hide-right::after { opacity: 0; }
+
+      /* subtle section separator between model cards and safety tips */
+      .section-separator {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+        margin: 28px 0;
+        position: relative;
+      }
+      .section-separator .label {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(17,24,39,0.75);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: #cbd5e1;
+        border: 1px solid rgba(255,255,255,0.03);
+        box-shadow: 0 4px 18px rgba(2,6,23,0.6);
+      }
+
+    </style>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-gray-900 to-black">
+
+    <!-- NAVBAR -->
+    <nav class="w-full bg-black/40 backdrop-blur-lg border-b border-gray-800 py-4">
+      <div class="max-w-screen-xl mx-auto px-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-indigo-400 tracking-wide">PhishSentinel</h1>
+
+        <ul class="flex gap-6 text-gray-300 text-sm font-medium">
+          <li class="hover:text-indigo-400 cursor-pointer transition">Home</li>
+          <li class="hover:text-indigo-400 cursor-pointer transition">About</li>
+          <li class="hover:text-indigo-400 cursor-pointer transition">How it Works</li>
+          <li class="hover:text-indigo-400 cursor-pointer transition">Contact</li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="w-full py-12 animate-fade">
+      <div class="mx-auto max-w-screen-md px-4">
+
+        <!-- Header -->
+        <div class="text-center mb-10 animate-float">
+          <h1 class="text-5xl font-extrabold tracking-tight text-indigo-400">
+            PHISHSENTINEL
+          </h1>
+          <p class="text-gray-300 mt-3 text-lg">
+            Intelligent phishing detection powered by AI
+          </p>
+        </div>
+
+        <!-- TABS -->
+        
+<div class="flex border-b border-gray-700 mb-8">
+  
+  <button
+    class="tab-btn px-5 py-3 text-sm font-medium border-b-0 transition-all duration-300
+      {% if active_tab == 'model1' %} text-white bg-green-600/10 ring-1 ring-green-500 {% else %} text-gray-400 {% endif %}"
+    data-tab="model1"
+    data-color="green">
+    Logistic Regression
+  </button>
+
+  <button
+    class="tab-btn px-5 py-3 text-sm font-medium border-b-0 transition-all duration-300
+      {% if active_tab == 'model2' %} text-white bg-red-600/10 ring-1 ring-red-500 {% else %} text-gray-400 {% endif %}"
+    data-tab="model2"
+    data-color="red">
+    XGBoost
+  </button>
+
+  <button
+  class="tab-btn px-5 py-3 text-sm font-medium border-b-0 transition-all duration-300
+    {% if active_tab == 'model3' %} text-white bg-blue-600/10 ring-1 ring-blue-500 {% else %} text-gray-400 {% endif %}"
+  data-tab="model3"
+  data-color="blue">
+  Random Forest
+</button>
+
+
+</div>
+
+
+
+        <!-- MODEL 1 CONTENT -->
+        <div id="model1" class="tab-content {% if active_tab == 'model1' %}active ring-1 ring-green-500/10 {% endif %}">
+
+          {% if predict %}
+          <div id="result-section" class="mb-10 flex justify-center animate-fade">
+            <div class="w-full bg-gray-800/60 border border-gray-700 rounded-3xl p-6 backdrop-blur-sm text-center shadow-lg">
+
+             
+
+              <!-- Result content -->
+              <div id="result-content">
+                <p class="text-lg font-medium text-gray-400">Scan Result</p>
+
+                <p class="text-3xl font-bold mt-2
+                  {% if predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %} text-green-400
+                  {% else %} text-red-400 {% endif %}">
+                  {{predict}}
+                </p>
+
+                <div class="mt-4">
+                  {% if predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %}
+                    <span class="text-green-400 font-semibold text-lg">Threat Level: Low</span>
+                  {% else %}
+                    <span class="text-red-400 font-semibold text-lg">Threat Level: High</span>
+                  {% endif %}
+                </div>
+
+                <p class="text-gray-400 mt-3 text-sm">
+                  {% if predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %}
+                    This URL appears safe.
+                  {% else %}
+                    This URL may be malicious. Avoid entering personal information.
+                  {% endif %}
+                </p>
+
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- FORM CARD -->
+          <div class="bg-gray-800/60 backdrop-blur-sm shadow-xl rounded-3xl p-10 border border-gray-700 
+                      transition transform hover:-translate-y-1 duration-300">
+
+            <form class="grid gap-6" method="POST" action="/">
+              <div class="animate-fade">
+                <label for="url" class="block mb-2 text-sm font-medium text-gray-300">Enter your URL</label>
+                <input
+                  name="url"
+                  id="url"
+                  type="text"
+                  class="w-full rounded-2xl border border-gray-600 bg-gray-900 px-4 py-3 text-gray-200 shadow-sm 
+                         focus:ring-4 focus:ring-indigo-600 focus:border-indigo-500 outline-none transition duration-300"
+                />
+              </div>
+
+              <div class="text-center mt-4 animate-fade">
+                <button
+                  class="w-full sm:w-48 ripple rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 
+                         text-white font-semibold py-3 shadow-md transition duration-200"
+                >
+                  ANALYZE
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+
+        <!-- MODEL 2 CONTENT (COPY OF UI) -->
+        <div id="model2" class="tab-content {% if active_tab == 'model2' %}active ring-1 ring-red-500/10 {% endif %}">
+
+          {% if xgb_predict %}
+          <div class="mb-10 flex justify-center animate-fade">
+            <div class="w-full bg-gray-800/60 border border-gray-700 rounded-3xl p-6 backdrop-blur-sm text-center shadow-lg">
+
+             
+
+              <div class="">
+                <p class="text-lg font-medium text-gray-400">Model 2 Output</p>
+
+                <p class="text-3xl font-bold mt-2
+                  {% if xgb_predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %} text-green-400
+                  {% else %} text-red-400 {% endif %}">
+                  {{xgb_predict}}
+                </p>
+
+                <div class="mt-4">
+                  {% if xgb_predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %}
+                    <span class="text-green-400 font-semibold text-lg">Threat Level: Low</span>
+                  {% else %}
+                    <span class="text-red-400 font-semibold text-lg">Threat Level: High</span>
+                  {% endif %}
+                </div>
+
+                <p class="text-gray-400 mt-3 text-sm">
+                  {% if xgb_predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %}
+                    Model 2 also considers this URL safe.
+                  {% else %}
+                    Model 2 also detects high risk. Do not continue.
+                  {% endif %}
+                </p>
+
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- FORM CARD COPY -->
+          <div class="bg-gray-800/60 backdrop-blur-sm shadow-xl rounded-3xl p-10 border border-gray-700 
+                      transition transform hover:-translate-y-1 duration-300">
+
+            <form class="grid gap-6" method="POST" action="/">
+  <div class="animate-fade">
+    <label for="url2" class="block mb-2 text-sm font-medium text-gray-300">Enter your URL</label>
+    <input
+      name="url2"
+      id="url2"
+      type="text"
+      class="w-full rounded-2xl border border-gray-600 bg-gray-900 px-4 py-3 text-gray-200 shadow-sm 
+             focus:ring-4 focus:ring-indigo-600 focus:border-indigo-500 outline-none transition duration-300"
+    />
+  </div>
+
+  <div class="text-center mt-4 animate-fade">
+    <button
+      class="w-full sm:w-48 ripple rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 
+             text-white font-semibold py-3 shadow-md transition duration-200"
+    >
+      ANALYZE
+    </button> 
+  </div>
+</form>
+
+          </div>
+
+        </div>
+
+        <!-- MODEL 3 CONTENT -->
+<div id="model3" class="tab-content {% if active_tab == 'model3' %}active ring-1 ring-blue-500/10 {% endif %}">
+
+  {% if rf_predict %}
+  <div class="mb-10 flex justify-center animate-fade">
+    <div class="w-full bg-gray-800/60 border border-gray-700 rounded-3xl p-6 backdrop-blur-sm text-center shadow-lg">
+
+      <p class="text-lg font-medium text-gray-400">Random Forest Output</p>
+
+      <p class="text-3xl font-bold mt-2
+        {% if rf_predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %} text-green-400
+        {% else %} text-red-400 {% endif %}">
+        {{rf_predict}}
+      </p>
+
+      <div class="mt-4">
+        {% if rf_predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %}
+          <span class="text-green-400 font-semibold text-lg">Threat Level: Low</span>
+        {% else %}
+          <span class="text-red-400 font-semibold text-lg">Threat Level: High</span>
+        {% endif %}
+      </div>
+
+      <p class="text-gray-400 mt-3 text-sm">
+        {% if rf_predict in ['SECURE!!','Legitimate','Secure','SAFE','SAFE!!'] %}
+          Random Forest detects low threat.
+        {% else %}
+          High threat detected by Random Forest.
+        {% endif %}
+      </p>
+
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- FORM CARD -->
+  <div class="bg-gray-800/60 backdrop-blur-sm shadow-xl rounded-3xl p-10 border border-gray-700 
+              transition transform hover:-translate-y-1 duration-300">
+
+    <form class="grid gap-6" method="POST" action="/">
+      <div class="animate-fade">
+        <label for="url3" class="block mb-2 text-sm font-medium text-gray-300">Enter your URL</label>
+        <input
+          name="url3"
+          id="url3"
+          type="text"
+          class="w-full rounded-2xl border border-gray-600 bg-gray-900 px-4 py-3 text-gray-200 shadow-sm 
+                 focus:ring-4 focus:ring-indigo-600 focus:border-indigo-500 outline-none transition duration-300"
+        />
+      </div>
+
+      <div class="text-center mt-4 animate-fade">
+        <button
+          class="w-full sm:w-48 ripple rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 
+                 text-white font-semibold py-3 shadow-md transition duration-200"
+        >
+          ANALYZE
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+        <!-- MODEL DESCRIPTION CARDS (horizontal layout) -->
+        <section class="mt-8">
+          <div class="model-scroll flex gap-6 overflow-x-auto py-2 -mx-4 px-4">
+            <!-- Card: Logistic Regression -->
+            <article class="flex-shrink-0 w-80 p-5 rounded-xl bg-gradient-to-br from-white/5 to-white/3 border border-gray-700 shadow-sm hover:shadow-md transition transform hover:-translate-y-1">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white flex-shrink-0">
+                  <!-- logistic icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h3l3 8 4-16 3 8h4" /></svg>
+                </div>
+
+                <div class="flex-1">
+                  <h4 class="text-sm font-semibold text-indigo-200">Logistic Regression</h4>
+                  <p class="text-xs text-gray-300 mt-2">Interpretable linear model using engineered URL features for quick, reliable inference.</p>
+
+                  <ul class="text-xs text-gray-400 mt-3 space-y-1">
+                    <li>• Fast & lightweight</li>
+                    <li>• Easy to interpret feature contributions</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card: XGBoost -->
+            <article class="flex-shrink-0 w-80 p-5 rounded-xl bg-gradient-to-br from-white/5 to-white/3 border border-gray-700 shadow-sm hover:shadow-md transition transform hover:-translate-y-1">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-red-600 flex items-center justify-center text-white flex-shrink-0">
+                  <!-- xgboost icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h4l3-7 4 17 3-8h4" /></svg>
+                </div>
+
+                <div class="flex-1">
+                  <h4 class="text-sm font-semibold text-red-200">XGBoost</h4>
+                  <p class="text-xs text-gray-300 mt-2">Gradient-boosted trees capture non-linear patterns and subtle interactions in URL signals.</p>
+
+                  <ul class="text-xs text-gray-400 mt-3 space-y-1">
+                    <li>• High accuracy on complex data</li>
+                    <li>• Robust to feature interactions</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card: Random Forest (NEW) -->
+            <article class="flex-shrink-0 w-80 p-5 rounded-xl bg-gradient-to-br from-white/5 to-white/3 border border-gray-700 shadow-sm hover:shadow-md transition transform hover:-translate-y-1">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-amber-600 flex items-center justify-center text-white flex-shrink-0">
+                  <!-- tree/forest icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2s4 3 4 6a4 4 0 11-8 0c0-3 4-6 4-6z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 14v6h12v-6" />
+                  </svg>
+                </div>
+
+                <div class="flex-1">
+                  <h4 class="text-sm font-semibold text-amber-200">Random Forest</h4>
+                  <p class="text-xs text-gray-300 mt-2">Ensemble of decision trees that aggregates multiple learners for stable, reliable predictions.</p>
+
+                  <ul class="text-xs text-gray-400 mt-3 space-y-1">
+                    <li>• Reduces overfitting via bagging</li>
+                    <li>• Handles noisy features and complex interactions well</li>
+                    <li>• Good baseline with robust performance</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card: How it works -->
+            <article class="flex-shrink-0 w-80 p-5 rounded-xl bg-gradient-to-br from-white/5 to-white/3 border border-gray-700 shadow-sm hover:shadow-md transition transform hover:-translate-y-1">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-emerald-600 flex items-center justify-center text-white flex-shrink-0">
+                  <!-- info icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
+                </div>
+
+                <div class="flex-1">
+                  <h4 class="text-sm font-semibold text-emerald-200">How it works</h4>
+                  <p class="text-xs text-gray-300 mt-2">Server-side preprocessing → feature extraction → model inference. Both models run independently and their outputs are displayed.</p>
+
+                  <ul class="text-xs text-gray-400 mt-3 space-y-1">
+                    <li>• Features extracted from URL structure and metadata</li>
+                    <li>• Predictions served from the server for consistency</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- Separator line between Model Description and Safety Tips -->
+        <div class="section-separator" role="separator" aria-hidden="false">
+          <div class="label">More Information</div>
+        </div>
+
+        <!-- SAFETY TIPS (vertical / stacked) -->
+        <section class="mt-8" aria-label="Safety Tips">
+          <div class="flex flex-col gap-6">
+            <!-- Card 1 -->
+            <article class="glass p-5 rounded-xl border border-gray-700 hover:shadow-xl transition transform hover:-translate-y-1 w-full" role="region" aria-labelledby="tip1">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-green-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                  <!-- shield-check icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 9-7 9s-7-4-7-9V7l7-4z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12l2 2 4-4"/></svg>
+                </div>
+
+                <div class="flex-1">
+                  <h3 id="tip1" class="text-sm font-semibold text-green-200">Verify Sender & Domain</h3>
+                  <p class="text-xs text-gray-400 mt-1">Always confirm sender addresses and look for subtle domain typos.</p>
+
+                  <ul class="mt-3 text-xs text-gray-300 space-y-1 ml-1">
+                    <li>• Inspect the full email address (not just the display name).</li>
+                    <li>• Watch for homoglyphs and extra subdomains (example.co vs example.com).</li>
+                  </ul>
+
+                  <div class="mt-3">
+                    <button class="text-xs px-3 py-1 rounded-md bg-white/6 text-white hover:bg-white/10">Learn more</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 2 -->
+            <article class="glass p-5 rounded-xl border border-gray-700 hover:shadow-xl transition transform hover:-translate-y-1 w-full" role="region" aria-labelledby="tip2">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                  <!-- link/magnifier icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.35-4.35"/></svg>
+                </div>
+
+                <div class="flex-1">
+                  <h3 id="tip2" class="text-sm font-semibold text-indigo-200">Inspect Links Safely</h3>
+                  <p class="text-xs text-gray-400 mt-1">Preview targets before clicking; avoid shortened URLs when unsure.</p>
+
+                  <ul class="mt-3 text-xs text-gray-300 space-y-1 ml-1">
+                    <li>• Hover to preview hrefs or right-click → copy link address.</li>
+                    <li>• Paste into a safe editor to inspect the destination without navigating.</li>
+                  </ul>
+
+                  <div class="mt-3">
+                    <button class="text-xs px-3 py-1 rounded-md bg-white/6 text-white hover:bg-white/10">How to inspect</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 3 -->
+            <article class="glass p-5 rounded-xl border border-gray-700 hover:shadow-xl transition transform hover:-translate-y-1 w-full" role="region" aria-labelledby="tip3">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-lg bg-gray-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                  <!-- lock icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+                </div>
+
+                <div class="flex-1">
+                  <h3 id="tip3" class="text-sm font-semibold text-gray-200">Protect Your Accounts</h3>
+                  <p class="text-xs text-gray-400 mt-1">Use unique passwords, 2FA and keep software updated.</p>
+
+                  <ul class="mt-3 text-xs text-gray-300 space-y-1 ml-1">
+                    <li>• Never share OTPs or passwords.</li>
+                    <li>• Use a password manager to avoid mistyped domains.</li>
+                  </ul>
+
+                  <div class="mt-3">
+                    <button class="text-xs px-3 py-1 rounded-md bg-white/6 text-white hover:bg-white/10">Recover account</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+
+      // TAB SWITCH SCRIPT
+const tabButtons = document.querySelectorAll(".tab-btn");
+const tabContents = document.querySelectorAll(".tab-content");
+
+tabButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+
+    // reset all buttons to inactive look
+    tabButtons.forEach(b => {
+      b.classList.remove("text-white","bg-green-600/10","ring-1","ring-green-500","bg-red-600/10","ring-red-500");
+      b.classList.add("text-gray-400");
+    });
+
+    // hide all tab contents
+    tabContents.forEach(c => c.classList.remove("active"));
+
+    // activate clicked button
+    btn.classList.remove("text-gray-400");
+    btn.classList.add("text-white");
+
+    // add color accent based on the button's data-color
+    const color = btn.dataset.color;
+    if (color === 'green') {
+      btn.classList.add("bg-green-600/10","ring-1","ring-green-500");
+    } else if (color === 'red') {
+      btn.classList.add("bg-red-600/10","ring-1","ring-red-500");
+    }else if (color === 'blue') {
+      btn.classList.add("bg-blue-600/10","ring-1","ring-blue-500");
+    }
+
+    // show matching content
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+
+      // fade scrollbar helper: toggle left/right fades based on scroll position
+      (function () {
+        const scroller = document.querySelector('.model-scroll');
+        if (!scroller) return;
+        const updateFades = () => {
+          // show left fade if not at left-most
+          if (scroller.scrollLeft > 8) scroller.classList.add('show-left'); else scroller.classList.remove('show-left');
+          // hide right fade if at or near right-most
+          if (scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 8) scroller.classList.add('hide-right'); else scroller.classList.remove('hide-right');
+        };
+        scroller.addEventListener('scroll', updateFades, { passive: true });
+        window.addEventListener('resize', updateFades);
+        // initialize
+        updateFades();
+      })();
+
+    </script>
+
+  </body>
+</html>
