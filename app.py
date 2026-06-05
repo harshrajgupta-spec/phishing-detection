@@ -3,6 +3,9 @@ import pickle
 import re
 
 app = Flask(__name__)
+@app.route("/health")
+def health():
+    return "OK"
 
 vector = pickle.load(open("vectorizer.pkl", 'rb'))
 model = pickle.load(open("phishing.pkl", 'rb'))
