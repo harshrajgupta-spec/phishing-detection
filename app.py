@@ -7,7 +7,7 @@ app = Flask(__name__)
 vector = pickle.load(open("vectorizer.pkl", 'rb'))
 model = pickle.load(open("phishing.pkl", 'rb'))
 xgb_model = pickle.load(open("xgb_model.pkl", 'rb'))
-rf_model = pickle.load(open("rf_model.pkl", 'rb'))
+# rf_model = pickle.load(open("rf_model.pkl", 'rb'))
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -20,7 +20,7 @@ def index():
     if request.method == 'POST':
         url = request.form.get('url')
         url2 = request.form.get('url2')
-        url3 = request.form.get('url3')   # NEW FIELD
+      #  url3 = request.form.get('url3')   # NEW FIELD
 
         # -------- MODEL 1 --------
         if url and url.strip():
@@ -53,7 +53,8 @@ def index():
             return render_template("index.html", xgb_predict=xgb_predict, active_tab=active_tab)
 
         # -------- MODEL 3 (RANDOM FOREST) --------
-        if url3 and url3.strip():
+   """
+     if url3 and url3.strip():
             cleaned_url3 = re.sub(r'^https?://(www\.)?', '', url3)
             pred = rf_model.predict(vector.transform([cleaned_url3]))[0]
 
@@ -66,6 +67,7 @@ def index():
 
             active_tab = "model3"
             return render_template("index.html", rf_predict=rf_predict, active_tab=active_tab)
+            """
 
     # GET request
     return render_template("index.html", active_tab=active_tab)
